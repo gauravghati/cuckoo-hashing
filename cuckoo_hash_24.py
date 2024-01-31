@@ -10,7 +10,7 @@ class CuckooHash24:
 		self.CYCLE_THRESHOLD = 10
 
 		self.table_size = init_size
-		self.tables = [[[None]*self.bucket_size]*init_size for _ in range(2)]
+		self.tables = [[None]*init_size for _ in range(2)]
 
 	def get_rand_idx_from_bucket(self, bucket_idx: int, table_id: int) -> int:
 		# you must use this function when you need to displace a random key from a bucket during insertion (see the description in requirements.py). 
@@ -35,36 +35,33 @@ class CuckooHash24:
 	# you should *NOT* change any of the existing code above this line
 	# you may however define additional instance variables inside the __init__ method.
 
-	def bucket_full(self, table_id: int, hash_value: int) -> bool:
-		bucket = self.tables[table_id][hash_value]
-		for i in range(self.bucket_size):
-			if bucket[i] is None:
-				return False
-		return True
-
 	def insert(self, key: int) -> bool:
 		if self.lookup(key):
 			return True
 
 		table_id = 0
-		hash_value = self.hash_func(key, 0)
-		cnt = 0
+		bucket_id = self.hash_func(key, 0)
+		displacements = 0
 		temp_key = key
 
-		while bucket_full(self, table_id, hash_value):
-			if cnt > self.CYCLE_THRESHOLD:
+		while self.tables[table_id][bucket_id] and len(self.tables[table_id][bucket_id]) == self.bucket_size:
+			if displacements > self.CYCLE_THRESHOLD:
 				return False
-			cnt += 1
-			temp_val = self.tables[table_id][hash_value]
-			self.tables[table_id][hash_value] = temp_key
+			displacements += 1
+			rand_val = self.get_rand_idx_from_bucket(bucket_id, table_id)
+			temp_val, self.tables[table_id][bucket_id][rand_val] = self.tables[table_id][bucket_id][rand_val], temp_key
 			table_id ^= 1
 			temp_key = temp_val
-			hash_value = self.hash_func(temp_key, table_id)
+			bucket_id = self.hash_func(temp_key, table_id)
 
-		self.tables[table_id][hash_value] = temp_key
+		bucket = self.tables[table_id][bucket_id]
+
+		if bucket is None:
+			bucket = []
+		else:
+			bucket.append(temp_key)
 
 		return True
-		pass
 
 	def lookup(self, key: int) -> bool:
 		table0 = self.tables[0]
@@ -73,15 +70,7 @@ class CuckooHash24:
 		hash_value0 = self.hash_func(key, 0)
 		hash_value1 = self.hash_func(key, 1)
 
-		for i in table0[hash_value0]:
-			if key == i:
-				return True
 
-		for i in table1[hash_value1]:
-			if key == i:
-				return True
-
-		return False
 
 	def delete(self, key: int) -> None:
 		table0 = self.tables[0]
@@ -90,13 +79,9 @@ class CuckooHash24:
 		hash_value0 = self.hash_func(key, 0)
 		hash_value1 = self.hash_func(key, 1)
 
-		for i in range(self.bucket_size):
-			if key == table0[hash_value0][i]:
-				table0[hash_value0][i] = None
 
-		for i in range(self.bucket_size):
-			if key == table1[hash_value1][i]:
-				table1[hash_value1][i] = None
+
+
 
 	def rehash(self, new_table_size: int) -> None:
 		self.__num_rehashes += 1; self.table_size = new_table_size # do not modify this line

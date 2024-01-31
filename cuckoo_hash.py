@@ -28,15 +28,14 @@ class CuckooHash:
 
 		table_id = 0
 		hash_value = self.hash_func(key, 0)
-		cnt = 0
+		displacements = 0
 		temp_key = key
 
 		while self.tables[table_id][hash_value] is not None:
-			if cnt > self.CYCLE_THRESHOLD:
+			if displacements > self.CYCLE_THRESHOLD:
 				return False
-			cnt += 1
-			temp_val = self.tables[table_id][hash_value]
-			self.tables[table_id][hash_value] = temp_key
+			displacements += 1
+			temp_val, self.tables[table_id][hash_value] = self.tables[table_id][hash_value], temp_key
 			table_id ^= 1
 			temp_key = temp_val
 			hash_value = self.hash_func(temp_key, table_id)
