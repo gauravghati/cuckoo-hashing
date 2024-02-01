@@ -36,9 +36,6 @@ class CuckooHash24:
 	# you may however define additional instance variables inside the __init__ method.
 
 	def insert(self, key: int) -> bool:
-		if self.lookup(key):
-			return True
-
 		table_id = 0
 		hash_value = self.hash_func(key, 0)
 		displacement = 0
@@ -46,12 +43,10 @@ class CuckooHash24:
 
 		while self.tables[table_id][hash_value] and len(self.tables[table_id][hash_value]) == self.bucket_size:
 			if displacement > self.CYCLE_THRESHOLD:
-				print(self.tables)
 				return False
 			displacement += 1
 			rand_idx = self.get_rand_idx_from_bucket(hash_value, table_id)
 			temp = self.tables[table_id][hash_value][rand_idx]
-			print("curr_key: ", curr_key, " temp: ", temp, " table_id: ", table_id, " hash_value: ", hash_value)
 			self.tables[table_id][hash_value].remove(temp)
 			self.tables[table_id][hash_value].append(curr_key)
 			curr_key = temp
@@ -64,8 +59,6 @@ class CuckooHash24:
 		else:
 			bucket.append(curr_key)
 		self.tables[table_id][hash_value] = bucket
-
-		print(self.tables)
 		return True
 
 	def lookup(self, key: int) -> bool:
@@ -95,25 +88,33 @@ class CuckooHash24:
 		bucket0 = table0[hash_value0]
 		bucket1 = table1[hash_value1]
 
-		if bucket0 is not None and key in bucket0:
+		if bucket0 and key in bucket0:
 			bucket0.remove(key)
 			if not bucket0:
 				table0[hash_value0] = None
 
-		if bucket1 is not None and key in bucket1:
+		if bucket1 and key in bucket1:
 			bucket1.remove(key)
 			if not bucket1:
 				table1[hash_value1] = None
 
-		print(self.tables)
-
 	def rehash(self, new_table_size: int) -> None:
-		self.__num_rehashes += 1; self.table_size = new_table_size # do not modify this line
-		# TODO
-		pass
+		self.__num_rehashes += 1
+		old_table_size = self.table_size
+		old_tables = self.get_table_contents()
+		self.table_size = new_table_size
+		self.tables = [[None]*new_table_size for _ in range(2)]
+
+		for i in range(old_table_size):
+			if old_tables[0][i] is not None:
+				for ele in old_tables[0][i]:
+					self.insert(ele)
+
+		for i in range(old_table_size):
+			if old_tables[1][i] is not None:
+				for ele in old_tables[1][i]:
+					self.insert(ele)
 
 	# feel free to define new methods in addition to the above
 	# fill in the definitions of each required member function (above),
 	# and for any additional member functions you define
-
-
