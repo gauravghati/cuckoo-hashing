@@ -3,6 +3,7 @@
 import random as rand
 from typing import List, Optional
 
+
 class CuckooHash:
 	def __init__(self, init_size: int):
 		self.__num_rehashes = 0
@@ -28,17 +29,19 @@ class CuckooHash:
 		displacements = 0
 		curr_key = key
 
-		while self.tables[table_id][hash_value] is not None:
-			if displacements > self.CYCLE_THRESHOLD:
-				return False
-			displacements += 1
-			temp, self.tables[table_id][hash_value] = self.tables[table_id][hash_value], curr_key
+		while displacements <= self.CYCLE_THRESHOLD:
+			if self.tables[table_id][hash_value] is None:
+				self.tables[table_id][hash_value] = curr_key
+				return True
+
+			temp = self.tables[table_id][hash_value]
+			self.tables[table_id][hash_value] = curr_key
 			table_id ^= 1
 			curr_key = temp
 			hash_value = self.hash_func(curr_key, table_id)
+			displacements += 1
 
-		self.tables[table_id][hash_value] = curr_key
-		return True
+		return False
 
 	def lookup(self, key: int) -> bool:
 		table0 = self.tables[0]
@@ -65,7 +68,7 @@ class CuckooHash:
 		old_table_size = self.table_size
 		old_tables = self.get_table_contents()
 		self.table_size = new_table_size
-		self.tables = [[None]*new_table_size for _ in range(2)]
+		self.tables = [[None] * new_table_size for _ in range(2)]
 
 		for i in range(old_table_size):
 			if old_tables[0][i] is not None:

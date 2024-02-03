@@ -13,10 +13,10 @@ class CuckooHash24:
 		self.tables = [[None]*init_size for _ in range(2)]
 
 	def get_rand_idx_from_bucket(self, bucket_idx: int, table_id: int) -> int:
-		# you must use this function when you need to displace a random key from a bucket during insertion (see the description in requirements.py). 
-		# this function randomly chooses an index from a given bucket for a given table. this ensures that the random 
+		# you must use this function when you need to displace a random key from a bucket during insertion (see the description in requirements.py).
+		# this function randomly chooses an index from a given bucket for a given table. this ensures that the random
 		# index chosen by your code and our test script match.
-		# 
+		#
 		# for example, if you are inserting some key x into table 0, and hash_func(x, 0) returns 5, and the bucket in index 5 of table 0 already has 4 elements,
 		# you will call get_rand_bucket_index(5, 0) to determine which key from that bucket to displace, i.e. if get_random_bucket_index(5, 0) returns 2, you
 		# will displace the key at index 2 in that bucket.
@@ -47,8 +47,7 @@ class CuckooHash24:
 			displacement += 1
 			rand_idx = self.get_rand_idx_from_bucket(hash_value, table_id)
 			temp = self.tables[table_id][hash_value][rand_idx]
-			self.tables[table_id][hash_value].remove(temp)
-			self.tables[table_id][hash_value].append(curr_key)
+			self.tables[table_id][hash_value][rand_idx] = curr_key
 			curr_key = temp
 			table_id ^= 1
 			hash_value = self.hash_func(curr_key, table_id)
